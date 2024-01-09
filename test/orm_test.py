@@ -1,30 +1,38 @@
+import configparser
 from decimal import Decimal
 from typing import List
-from pydantic import ValidationError
-
-import pytest
-import pytest_asyncio
-from sqlalchemy.exc import DBAPIError, IntegrityError
-from sqlalchemy.ext.asyncio import (AsyncConnection, AsyncSession,
-                                    async_scoped_session, async_sessionmaker,
-                                    create_async_engine)
 
 import orm.api
+import pytest
+import pytest_asyncio
 from money.account import Account
 from money.bank_account import BankAccount
 from money.organization import Organization
 from orm.account import AccountOrm, TransactionOrm
-from orm.api import (add_transactions, create_account, create_bank_account,
-                     delete_account, end_connection, get_account_details,
-                     get_accounts, get_bank_account_details, get_bank_accounts,
+from orm.api import (add_transactions, create_account, delete_account,
+                     end_connection, get_account_details, get_accounts,
+                     get_bank_account_details, get_bank_accounts,
                      get_organization)
 from orm.bank_account import BankAccountOrm
 from orm.base import Base
 from orm.exc import InvalidFieldsError
 from orm.organization import OrganizationOrm
+from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-URL = 'postgresql+asyncpg://postgres:postgres@localhost/test'
-async_engine = create_async_engine(URL, pool_size=10, max_overflow=10)
+config = configparser.ConfigParser()
+config.read('settings.ini')
+
+USER = config['test']['DbUser']
+PASSWORD = config['test']['DbPassword']
+HOST = config['test']['DbHost']
+DB_NAME = config['test']['DbDatabase']
+
+DB_URL = ('postgresql+asyncpg://'
+          f'{USER}:{PASSWORD}@'
+          f'{HOST}/{DB_NAME}')
+
+async_engine = create_async_engine(DB_URL, pool_size=10, max_overflow=10)
 async_session = async_sessionmaker(
     async_engine,
     expire_on_commit=False,
@@ -235,7 +243,7 @@ async def test_add_bank_account(organizations):
                           bank=Organization.model_validate(
                               organizations[0], from_attributes=True))
 
-    account_orm = await create_bank_account(account)
+    account_orm = await create_account(account)
 
     details = await get_bank_account_details(account_orm.id)
     assert details is not None
@@ -252,7 +260,7 @@ async def test_add_bank_account_new_bank(organizations):
                           code=9999,
                           bank=Organization(name='One more', shortcut='more'))
 
-    account_orm = await create_bank_account(account)
+    account_orm = await create_account(account)
 
     details = await get_bank_account_details(account_orm.id)
     assert details is not None

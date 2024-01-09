@@ -1,9 +1,5 @@
+import configparser
 from typing import Optional, Sequence, Union
-
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm import joinedload, noload
 
 from money.account import Account
 from money.bank_account import BankAccount
@@ -11,14 +7,32 @@ from money.organization import Organization
 from money.stock_account import StockAccount
 from orm.account import AccountOrm, TransactionOrm
 from orm.bank_account import BankAccountOrm
-from orm.connection import async_session, engine
 from orm.exc import InvalidFieldsError
 from orm.organization import OrganizationOrm
 from orm.stock_account import StockAccountOrm
+from sqlalchemy import func, select
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
+from sqlalchemy.orm import joinedload, noload
+
+config = configparser.ConfigParser()
+config.read('settings.ini')
+
+USER = config['orm']['User']
+PASSWORD = config['orm']['Password']
+HOST = config['orm']['Host']
+DB_NAME = config['orm']['Database']
+
+DB_URL = ('postgresql+asyncpg://'
+          f'{USER}:{PASSWORD}@'
+          f'{HOST}/{DB_NAME}')
+
+engine = create_async_engine(DB_URL, echo=True)
+async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def end_connection() -> None:
-    print(engine.url)
     await engine.dispose()
 
 
