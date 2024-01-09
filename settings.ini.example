@@ -1,0 +1,8 @@
+[orm]
+User = postgres
+Password = postgres
+Host = localhost
+Database = accounts
+
+[bot]
+ApiKey = some_number:some_letters
