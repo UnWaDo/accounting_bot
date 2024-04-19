@@ -26,6 +26,8 @@ class PassMoneyForm(StatesGroup):
 
     categories = [
         'Еда',
+        'Бензин',
+        'Аптеки',
         'Зарплата',
         'Развлечения',
         'Регулярные платежи',
@@ -137,8 +139,8 @@ async def set_comment(message: Message, state: FSMContext):
 
     data = await state.get_data()
 
-    source: Account = data['source']
-    target: Account = data['target']
+    source: Account = await get_account_details(data['source_id'])
+    target: Account = await get_account_details(data['target_id'])
 
     source.pass_money(
         target=target,
@@ -148,7 +150,11 @@ async def set_comment(message: Message, state: FSMContext):
     try:
         await add_transactions(source)
         await add_transactions(target)
-        text = 'Transaction saved'
+
+        text = (f'Transaction {source.name} -[{data["value"]}]-> {target.name} saved\n'
+                f'Actual balance: {source.name} ({source.get_balance()}), '
+                f'{target.name} ({target.get_balance()})')
+
     except InvalidFieldsError:
         text = 'Error while saving transaction'
 

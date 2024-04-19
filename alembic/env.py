@@ -9,7 +9,7 @@ import orm.base
 from alembic import context
 from orm.account import AccountOrm, TransactionOrm
 from orm.bank_account import BankAccountOrm
-from orm.connection import DB_URL, engine
+from orm.api import DB_URL, engine
 from orm.organization import OrganizationOrm
 from orm.stock_account import StockAccountOrm
 
